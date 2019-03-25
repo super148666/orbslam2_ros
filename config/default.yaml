@@ -1,0 +1,4 @@
+/orbslam2_ros:
+  image_topic_name: "/right_image"
+  vocabulary_path: "Vocabulary/ORBvoc.txt"
+  parameters_path: "sae.yaml"

@@ -1,0 +1,5 @@
+<launch>
+    <rosparam command="load" file="$(find orbslam2_ros)/config/default.yaml" />
+
+    <node name="ros_mono" pkg="orbslam2_ros" type="ros_mono" output="screen"/>
+</launch>
