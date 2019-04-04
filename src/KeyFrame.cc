@@ -172,7 +172,7 @@ namespace ORB_SLAM2 {
 //            }
 //        }
 
-        if (sz  < N)
+        if (sz < N)
             return mvpOrderedConnectedKeyFrames;
         else
             return vector<KeyFrame *>(mvpOrderedConnectedKeyFrames.begin(), mvpOrderedConnectedKeyFrames.begin() + N);

@@ -20,8 +20,6 @@
 
 #include <include/KeyFrameDatabase.h>
 
-#include "KeyFrameDatabase.h"
-
 
 using namespace std;
 

@@ -27,107 +27,81 @@ namespace ORB_SLAM2 {
     }
 
     void Map::AddKeyFrame(KeyFrame *pKF) {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
         mspKeyFrames.insert(pKF);
         if (pKF->mnId > mnMaxKFid)
             mnMaxKFid = pKF->mnId;
-        cout<<"map unlocked\n";
     }
 
     void Map::AddMapPoint(MapPoint *pMP) {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
         mspMapPoints.insert(pMP);
-        cout<<"map unlocked\n";
     }
 
     void Map::EraseMapPoint(MapPoint *pMP) {
-        cout<<"map locked\n";
-        try{
+        try {
             unique_lock<mutex> lock(mMutexMap);
         }
-        catch (const std::exception& e){
-            cout<<e.what()<<"\n";
+        catch (const std::exception &e) {
+            cout << e.what() << "\n";
         }
 
         mspMapPoints.erase(pMP);
 
         // TODO: This only erase the pointer.
         // Delete the MapPoint
-        cout<<"map unlocked\n";
     }
 
     void Map::EraseKeyFrame(KeyFrame *pKF) {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
         mspKeyFrames.erase(pKF);
 
         // TODO: This only erase the pointer.
         // Delete the MapPoint
-        cout<<"map unlocked\n";
     }
 
     void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs) {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
         mvpReferenceMapPoints = vpMPs;
-        cout<<"map unlocked\n";
     }
 
     void Map::InformNewBigChange() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
         mnBigChangeIdx++;
-        cout<<"map unlocked\n";
     }
 
     int Map::GetLastBigChangeIdx() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return mnBigChangeIdx;
     }
 
     vector<KeyFrame *> Map::GetAllKeyFrames() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return vector<KeyFrame *>(mspKeyFrames.begin(), mspKeyFrames.end());
     }
 
     vector<MapPoint *> Map::GetAllMapPoints() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return vector<MapPoint *>(mspMapPoints.begin(), mspMapPoints.end());
     }
 
     long unsigned int Map::MapPointsInMap() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return mspMapPoints.size();
     }
 
     long unsigned int Map::KeyFramesInMap() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return mspKeyFrames.size();
     }
 
     vector<MapPoint *> Map::GetReferenceMapPoints() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return mvpReferenceMapPoints;
     }
 
     long unsigned int Map::GetMaxKFid() {
-        cout<<"map locked\n";
         unique_lock<mutex> lock(mMutexMap);
-        cout<<"map unlocked\n";
         return mnMaxKFid;
     }
 
@@ -146,7 +120,7 @@ namespace ORB_SLAM2 {
     }
 
     void Map::save(boost::archive::binary_oarchive &ar, const unsigned int version) const {
-
+        cout<<"saving Map ...\n";
         auto numKeyFrames = mspKeyFrames.size();
         auto numMapPoints = mspMapPoints.size();
         ar & mnMaxKFid & mnBigChangeIdx;
@@ -174,13 +148,12 @@ namespace ORB_SLAM2 {
         // save mvpReferenceMapPoints
         auto imvpReferenceMapPoints = createIdList(mvpReferenceMapPoints);
         ar & imvpReferenceMapPoints;
-
+        cout<<"Done saving Map\n";
     }
 
     void Map::load(boost::archive::binary_iarchive &ar, const unsigned int version) {
         {
             cout << "loading Map ...\n";
-            cout<<"map locked\n";
             unique_lock<mutex> lock(mMutexMap);
             ar & mnMaxKFid & mnBigChangeIdx;
 
@@ -221,11 +194,11 @@ namespace ORB_SLAM2 {
             }
 
 
-            for (auto&kf:mspKeyFrames) {
+            for (auto &kf:mspKeyFrames) {
                 kf->Recover();
             }
 
-            for (auto&mp:mspMapPoints) {
+            for (auto &mp:mspMapPoints) {
                 mp->Recover();
                 mp->SetMap(this);
             }
@@ -234,7 +207,6 @@ namespace ORB_SLAM2 {
             vector<uint64_t> imvpReferenceMapPoints;
             ar & imvpReferenceMapPoints;
             mvpReferenceMapPoints = createObjectList<MapPoint>(imvpReferenceMapPoints);
-            cout<<"map unlocked\n";
             cout << "DONE loading Map ...\n";
 
         }

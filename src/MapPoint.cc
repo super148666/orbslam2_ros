@@ -20,7 +20,6 @@
 
 #include <include/MapPoint.h>
 
-#include "MapPoint.h"
 #include "ORBmatcher.h"
 
 

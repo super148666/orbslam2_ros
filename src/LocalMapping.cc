@@ -689,7 +689,7 @@ namespace ORB_SLAM2 {
         ar & mpCurrentKeyFrame->mnId;
         auto vmlpRecentAddedMapPoints = createIdList(mlpRecentAddedMapPoints);
         ar & vmlpRecentAddedMapPoints;
-        cout<<vmlpRecentAddedMapPoints.size()<<endl;
+        cout << vmlpRecentAddedMapPoints.size() << endl;
         ar & mbAbortBA & mbStopped & mbStopRequested & mbNotStop & mbAcceptKeyFrames;
     }
 
@@ -703,7 +703,7 @@ namespace ORB_SLAM2 {
         mpCurrentKeyFrame = KeyFrame::objectListLookup[id];
         std::list<uint64_t> idList2;
         ar & idList2;
-        cout<<idList2.size();
+        cout << idList2.size();
         mlpRecentAddedMapPoints = createObjectList<MapPoint>(idList2);
         ar & mbAbortBA & mbStopped & mbStopRequested & mbNotStop & mbAcceptKeyFrames;
     }

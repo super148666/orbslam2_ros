@@ -20,8 +20,6 @@
 
 #include <include/LoopClosing.h>
 
-#include "LoopClosing.h"
-
 #include "Sim3Solver.h"
 
 #include "Converter.h"
@@ -704,7 +702,7 @@ namespace ORB_SLAM2 {
     }
 
     void LoopClosing::save(boost::archive::binary_oarchive &ar, const unsigned int version) const {
-        ar&mbResetRequested&mbFinished&mbFinishRequested;
+        ar & mbResetRequested & mbFinished & mbFinishRequested;
         auto idList = createIdList(mlpLoopKeyFrameQueue);
         ar & idList;
         ar & mnCovisibilityConsistencyTh;
@@ -712,16 +710,16 @@ namespace ORB_SLAM2 {
         auto idList2 = createIdList(mvpEnoughConsistentCandidates);
         ar & idList2;
         auto idList3 = createIdList(mvpCurrentConnectedKFs);
-        ar&idList3;
+        ar & idList3;
         auto idList4 = createIdList(mvpCurrentMatchedPoints);
-        ar&idList4;
+        ar & idList4;
         auto idList5 = createIdList(mvpLoopMapPoints);
-        ar& idList5;
-        ar&mScw&mLastLoopKFid & mbRunningGBA &mbFinishedGBA&mbStopGBA&mbFixScale&mnFullBAIdx;
+        ar & idList5;
+        ar & mScw & mLastLoopKFid & mbRunningGBA & mbFinishedGBA & mbStopGBA & mbFixScale & mnFullBAIdx;
     }
 
     void LoopClosing::load(boost::archive::binary_iarchive &ar, const unsigned int version) {
-        ar&mbResetRequested&mbFinished&mbFinishRequested;
+        ar & mbResetRequested & mbFinished & mbFinishRequested;
         std::list<uint64_t> idList;
         ar & idList;
         mlpLoopKeyFrameQueue = createObjectList<KeyFrame>(idList);
@@ -736,7 +734,7 @@ namespace ORB_SLAM2 {
         mvpCurrentMatchedPoints = createObjectList<MapPoint>(idVector);
         ar & idVector;
         mvpLoopMapPoints = createObjectList<MapPoint>(idVector);
-        ar&mScw&mLastLoopKFid & mbRunningGBA &mbFinishedGBA&mbStopGBA&mbFixScale&mnFullBAIdx;
+        ar & mScw & mLastLoopKFid & mbRunningGBA & mbFinishedGBA & mbStopGBA & mbFixScale & mnFullBAIdx;
     }
 
     void LoopClosing::SetKeyFrameDatabase(KeyFrameDatabase *kfd) {

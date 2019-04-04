@@ -22,7 +22,6 @@
 
 #include <include/System.h>
 
-#include "System.h"
 #include "Converter.h"
 
 
@@ -30,8 +29,8 @@ namespace ORB_SLAM2 {
 
     System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                    const bool bUseViewer) : mSensor(sensor), mbReset(false),
-                                                                        mbActivateLocalizationMode(false),
-                                                                        mbDeactivateLocalizationMode(false) {
+                                            mbActivateLocalizationMode(false),
+                                            mbDeactivateLocalizationMode(false) {
         // Output welcome message
         cout << endl <<
              "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza." << endl <<
@@ -434,14 +433,16 @@ namespace ORB_SLAM2 {
     }
 
     void System::save(boost::archive::binary_oarchive &ar, const unsigned int version) const {
+        cout << "start saving System...\n";
         ar & mSensor & mbActivateLocalizationMode & mbDeactivateLocalizationMode & mTrackingState;
         ar & mpMap;
         ar & mpTracker & mpLoopCloser;
         ar & mpKeyFrameDatabase;
+        cout << "Done saving System\n";
     }
 
     void System::load(boost::archive::binary_iarchive &ar, const unsigned int version) {
-        cout<<"start load System\n";
+        cout << "start load System\n";
         ar & mSensor & mbActivateLocalizationMode & mbDeactivateLocalizationMode & mTrackingState;
         ar & mpMap;
         ar & mpTracker & mpLoopCloser;
@@ -470,7 +471,7 @@ namespace ORB_SLAM2 {
         mpTracker->mState = Tracking::LOST;
 
         mbReset = false;
-        cout<<"done load System\n";
+        cout << "done load System\n";
     }
 
     void System::SetORBVocabulary(ORBVocabulary *voc) {

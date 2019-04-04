@@ -21,13 +21,10 @@
 
 #include <include/Tracking.h>
 
-#include "Tracking.h"
-
 #include"ORBmatcher.h"
 
 #include"Optimizer.h"
 #include"PnPsolver.h"
-#include <boost/serialization/list.hpp>
 
 
 using namespace std;
@@ -204,7 +201,6 @@ namespace ORB_SLAM2 {
 
 
     cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp) {
-        cout<<"start grab image\n";
         mImGray = im;
 
         if (mImGray.channels() == 3) {
@@ -218,7 +214,6 @@ namespace ORB_SLAM2 {
             else
                 cvtColor(mImGray, mImGray, CV_BGRA2GRAY);
         }
-        cout<<"current state: "<<mState<<'\n';
         if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET)
             mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth);
         else
@@ -227,13 +222,10 @@ namespace ORB_SLAM2 {
 
         Track();
 
-        cout<<"done grab image\n";
         return mCurrentFrame.mTcw.clone();
     }
 
     void Tracking::Track() {
-        cout<<"start tracking\n";
-        cout<<"state before tracking: "<<mState<<'\n';
 
         if (mState == NO_IMAGES_YET) {
             mState = NOT_INITIALIZED;
@@ -245,92 +237,55 @@ namespace ORB_SLAM2 {
         unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
         if (mState == NOT_INITIALIZED) {
-            cout<<"map not initialized yet\n";
-            cout<<"start initialization\n";
             if (mSensor == System::STEREO || mSensor == System::RGBD)
                 StereoInitialization();
             else
                 MonocularInitialization();
-            cout<<"done initialization\n";
 
-            cout<<"start check mState: "<<mState<<'\n';
             if (mState != OK) {
-                cout << "mState != OK stop this tracking\n";
-                cout << "done tracking\n";
                 return;
             }
-            cout<<"done check mState: "<<mState<<'\n';
 
         } else {
-            cout<<"map has been initialized\n";
             // System is initialized. Track Frame.
             bool bOK;
 
             // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
             if (!mbOnlyTracking) {
-                cout<<"SLAM mode\n";
                 // Local Mapping is activated. This is the normal behaviour, unless
                 // you explicitly activate the "only tracking" mode.
 
                 if (mState == OK) {
-                    cout<<"last tracking is ok\n";
-                    cout<<"start check changed in mappoints in last frame\n";
                     // Local Mapping might have changed some MapPoints tracked in last frame
                     CheckReplacedInLastFrame();
-                    cout<<"done check changed in mappoints in last frame\n";
 
                     if (mVelocity.empty() || mCurrentFrame.mnId < mnLastRelocFrameId + 2) {
-                        cout<<"no velocity available or current frame is not continuous\n";
-                        cout<<"start track reference key frame\n";
                         bOK = TrackReferenceKeyFrame();
-                        cout<<"done track reference key frame\n";
                     } else {
-                        cout<<"has velocity and current frame is continuous\n";
-                        cout<<"start track with motion model\n";
                         bOK = TrackWithMotionModel();
-                        cout<<"done track with motion model\n";
 
                         if (!bOK) {
-                            cout<<"track with motion model is failed\n";
-                            cout<<"start track reference key frame\n";
                             bOK = TrackReferenceKeyFrame();
-                            cout<<"done track reference key frame\n";
                         }
                     }
                 } else {
-                    cout<<"last tracking is failed\n";
-                    cout<<"start relocalization\n";
                     bOK = Relocalization();
-                    cout<<"done relocalization\n";
                 }
             } else {
-                cout<<"Localization only mode\n";
                 // Localization Mode: Local Mapping is deactivated
 
                 if (mState == LOST) {
-                    cout<<"tracking is lost\n";
-
-                    cout<<"start relocalization\n";
                     bOK = Relocalization();
-                    cout<<"done relocalization\n";
                 } else {
                     if (!mbVO) {
-                        cout<<"there are matches to map from last frame\n";
                         // In last frame we tracked enough MapPoints in the map
 
                         if (!mVelocity.empty()) {
-                            cout<<"velocity available\n";
-
-                            cout<<"start track with motion model\n";
                             bOK = TrackWithMotionModel();
-                            cout<<"done track with motion model\n";
                         } else {
-                            cout<<"start track reference key frame\n";
                             bOK = TrackReferenceKeyFrame();
-                            cout<<"done track reference key frame\n";
                         }
                     } else {
-                        cout<<"there is no match to map from last frame\n";
                         // In last frame we tracked mainly "visual odometry" points.
 
                         // We compute two camera poses, one from motion model and one doing relocalization.
@@ -343,23 +298,14 @@ namespace ORB_SLAM2 {
                         vector<bool> vbOutMM;
                         cv::Mat TcwMM;
                         if (!mVelocity.empty()) {
-                            cout<<"velocity available\n";
-
-                            cout<<"start track with motion model\n";
                             bOKMM = TrackWithMotionModel();
-                            cout<<"done track with motion model\n";
                             vpMPsMM = mCurrentFrame.mvpMapPoints;
                             vbOutMM = mCurrentFrame.mvbOutlier;
                             TcwMM = mCurrentFrame.mTcw.clone();
                         }
-                        cout<<"start relocalization\n";
                         bOKReloc = Relocalization();
-                        cout<<"done relocalization\n";
 
                         if (bOKMM && !bOKReloc) {
-                            cout<<"motion model is ok\n";
-                            cout<<"relocalization is failed\n";
-                            cout<<"use result from motion model\n";
                             mCurrentFrame.SetPose(TcwMM);
                             mCurrentFrame.mvpMapPoints = vpMPsMM;
                             mCurrentFrame.mvbOutlier = vbOutMM;
@@ -372,8 +318,6 @@ namespace ORB_SLAM2 {
                                 }
                             }
                         } else if (bOKReloc) {
-                            cout<<"relocalization is ok\n";
-                            cout<<"using result from relocalization\n";
                             mbVO = false;
                         }
 
@@ -387,18 +331,14 @@ namespace ORB_SLAM2 {
             // If we have an initial estimation of the camera pose and matching. Track the local map.
             if (!mbOnlyTracking) {
                 if (bOK) {
-                    cout<<"start track local map\n";
                     bOK = TrackLocalMap();
-                    cout<<"done track local map\n";
                 }
             } else {
                 // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
                 // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
                 // the camera we will use the local map again.
                 if (bOK && !mbVO) {
-                    cout<<"start track local map\n";
                     bOK = TrackLocalMap();
-                    cout<<"done track local map\n";
                 }
             }
 
@@ -409,7 +349,6 @@ namespace ORB_SLAM2 {
 
             // If tracking were good, check if we insert a keyframe
             if (bOK) {
-                cout<<"start update motion model\n";
                 // Update motion model
                 if (!mLastFrame.mTcw.empty()) {
                     cv::Mat LastTwc = cv::Mat::eye(4, 4, CV_32F);
@@ -418,10 +357,8 @@ namespace ORB_SLAM2 {
                     mVelocity = mCurrentFrame.mTcw * LastTwc;
                 } else
                     mVelocity = cv::Mat();
-                cout<<"done update motion model\n";
 
                 // Clean VO matches
-                cout<<"start clean VO matches\n";
                 for (int i = 0; i < mCurrentFrame.N; i++) {
                     MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
                     if (pMP)
@@ -430,46 +367,34 @@ namespace ORB_SLAM2 {
                             mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint *>(NULL);
                         }
                 }
-                cout<<"done clean VO matches\n";
 
                 // Delete temporal MapPoints
-                cout<<"start delete temporal map points\n";
                 for (list<MapPoint *>::iterator lit = mlpTemporalPoints.begin(), lend = mlpTemporalPoints.end();
                      lit != lend; lit++) {
                     MapPoint *pMP = *lit;
                     delete pMP;
                 }
                 mlpTemporalPoints.clear();
-                cout<<"done delete temporal map points\n";
 
                 // Check if we need to insert a new keyframe
                 if (NeedNewKeyFrame()) {
-                    cout<<"need new key frame\n";
-                    cout<<"start insert new key frame\n";
                     CreateNewKeyFrame();
-                    cout<<"done insert new key frame\n";
                 }
 
                 // We allow points with high innovation (considererd outliers by the Huber Function)
                 // pass to the new keyframe, so that bundle adjustment will finally decide
                 // if they are outliers or not. We don't want next frame to estimate its position
                 // with those points so we discard them in the frame
-                cout<<"start remove outliner map point from current frame\n";
                 for (int i = 0; i < mCurrentFrame.N; i++) {
                     if (mCurrentFrame.mvpMapPoints[i] && mCurrentFrame.mvbOutlier[i])
                         mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint *>(NULL);
                 }
-                cout<<"done remove outliner map point from current frame\n";
             }
 
             // Reset if the camera get lost soon after initialization
             if (mState == LOST) {
                 if (mpMap->KeyFramesInMap() <= 5) {
-                    cout << "Track lost soon after initialisation" << endl;
-                    cout<<"start reset\n";
                     mpSystem->Reset();
-                    cout<<"done reset\n";
-                    cout<<"done tracking\n";
                     return;
                 }
             }
@@ -481,7 +406,6 @@ namespace ORB_SLAM2 {
         }
 
         // Store frame pose information to retrieve the complete camera trajectory afterwards.
-        cout<<"start store frame pose\n";
         if (!mCurrentFrame.mTcw.empty()) {
             cv::Mat Tcr = mCurrentFrame.mTcw * mCurrentFrame.mpReferenceKF->GetPoseInverse();
             mlRelativeFramePoses.push_back(Tcr);
@@ -495,9 +419,6 @@ namespace ORB_SLAM2 {
             mlFrameTimes.push_back(mlFrameTimes.back());
             mlbLost.push_back(mState == LOST);
         }
-        cout<<"done store frame pose\n";
-        cout<<"final tracking state: "<<mState<<'\n';
-        cout<<"done tracking\n";
     }
 
 
@@ -527,8 +448,6 @@ namespace ORB_SLAM2 {
                     mCurrentFrame.mvpMapPoints[i] = pNewMP;
                 }
             }
-
-            cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
             mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -909,10 +828,7 @@ namespace ORB_SLAM2 {
         if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 50)
             return false;
 
-        if (mnMatchesInliers < 30)
-            return false;
-        else
-            return true;
+        return mnMatchesInliers >= 30;
     }
 
 
@@ -1237,24 +1153,17 @@ namespace ORB_SLAM2 {
 
     bool Tracking::Relocalization() {
         // Compute Bag of Words Vector
-        cout<<"start compute bow\n";
         mCurrentFrame.ComputeBoW();
-        cout<<"done compute bow\n";
 
         // Relocalization is performed when tracking is lost
         // Track Lost: Query KeyFrame Database for keyframe candidates for relocalisation
-        cout<<"start get relocalization candidates\n";
         vector<KeyFrame *> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
-        cout<<"done get relocalization candidates\n";
 
         if (vpCandidateKFs.empty()) {
-            cout<<"no candidates available\n";
-            cout<<"relocalization failed\n";
             return false;
         }
 
         const int nKFs = vpCandidateKFs.size();
-        cout<<"there are "<<nKFs<<" candidates available\n";
 
         // We perform first an ORB matching with each candidate
         // If enough matches are found we setup a PnP solver
@@ -1272,21 +1181,15 @@ namespace ORB_SLAM2 {
         int nCandidates = 0;
 
         for (int i = 0; i < nKFs; i++) {
-            cout<<"candidate "<<i+1<<'/'<<nKFs<<'\n';
             KeyFrame *pKF = vpCandidateKFs[i];
             if (pKF->isBad()) {
-                cout<<"bad candidate, discarded\n";
                 vbDiscarded[i] = true;
-            }
-            else {
+            } else {
                 int nmatches = matcher.SearchByBoW(pKF, mCurrentFrame, vvpMapPointMatches[i]);
-                cout<<"nmatches: "<<nmatches<<'\n';
                 if (nmatches < 15) {
-                    cout<<"num of matches is lower than 15, discarded\n";
                     vbDiscarded[i] = true;
                     continue;
                 } else {
-                    cout<<"candidate valid\n";
                     PnPsolver *pSolver = new PnPsolver(mCurrentFrame, vvpMapPointMatches[i]);
                     pSolver->SetRansacParameters(0.99, 10, 300, 4, 0.5, 5.991);
                     vpPnPsolvers[i] = pSolver;
@@ -1295,7 +1198,6 @@ namespace ORB_SLAM2 {
             }
         }
 
-        cout<<"there are "<<nCandidates<<" valid candidates\n";
 
         // Alternatively perform some iterations of P4P RANSAC
         // Until we found a camera pose supported by enough inliers
@@ -1307,7 +1209,6 @@ namespace ORB_SLAM2 {
                 if (vbDiscarded[i])
                     continue;
 
-                cout<<"candidate "<<i+1<<'/'<<nKFs<<'\n';
 
                 // Perform 5 Ransac Iterations
                 vector<bool> vbInliers;
@@ -1319,14 +1220,12 @@ namespace ORB_SLAM2 {
 
                 // If Ransac reachs max. iterations discard keyframe
                 if (bNoMore) {
-                    cout<<"ransac reachs max, discarded\n";
                     vbDiscarded[i] = true;
                     nCandidates--;
                 }
 
                 // If a Camera Pose is computed, optimize
                 if (!Tcw.empty()) {
-                    cout<<"has camera pose\n";
                     Tcw.copyTo(mCurrentFrame.mTcw);
 
                     set<MapPoint *> sFound;
@@ -1342,9 +1241,7 @@ namespace ORB_SLAM2 {
                     }
 
                     int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
-                    cout<<"nGood: "<<nGood<<'\n';
                     if (nGood < 10) {
-                        cout<<"nGood < 10, not a good match\n";
                         continue;
                     }
 
@@ -1354,30 +1251,23 @@ namespace ORB_SLAM2 {
 
                     // If few inliers, search by projection in a coarse window and optimize again
                     if (nGood < 50) {
-                        cout<<"nGood < 50\n";
                         int nadditional = matcher2.SearchByProjection(mCurrentFrame, vpCandidateKFs[i], sFound, 10,
                                                                       100);
-                        cout<<"nadditional: "<<nadditional<<'\n';
                         if (nadditional + nGood >= 50) {
-                            cout<<"nadditional + nGood >= 50\n";
                             nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
                             // If many inliers but still not enough, search by projection again in a narrower window
                             // the camera has been already optimized with many points
                             if (nGood > 30 && nGood < 50) {
-                                cout<<"30 < nGood < 50\n";
                                 sFound.clear();
                                 for (int ip = 0; ip < mCurrentFrame.N; ip++)
                                     if (mCurrentFrame.mvpMapPoints[ip])
                                         sFound.insert(mCurrentFrame.mvpMapPoints[ip]);
                                 nadditional = matcher2.SearchByProjection(mCurrentFrame, vpCandidateKFs[i], sFound, 3,
                                                                           64);
-                                cout<<"nadditional: "<<nadditional<<'\n';
                                 // Final optimization
                                 if (nGood + nadditional >= 50) {
-                                    cout<<"nadditional + nGood >= 50\n";
                                     nGood = Optimizer::PoseOptimization(&mCurrentFrame);
-                                    cout<<"nGood: "<<nGood<<"\n";
 
                                     for (int io = 0; io < mCurrentFrame.N; io++)
                                         if (mCurrentFrame.mvbOutlier[io])
@@ -1390,20 +1280,16 @@ namespace ORB_SLAM2 {
 
                     // If the pose is supported by enough inliers stop ransacs and continue
                     if (nGood >= 50) {
-                        cout<<"good match on camera pose\n";
                         bMatch = true;
                         break;
                     }
-                    cout<<"done optimize camera pose\n";
                 }
             }
         }
 
         if (!bMatch) {
-            cout<<"relocalization failed\n";
             return false;
         } else {
-            cout<<"relocalization is ok\n";
             mnLastRelocFrameId = mCurrentFrame.mnId;
             return true;
         }
@@ -1411,21 +1297,15 @@ namespace ORB_SLAM2 {
     }
 
     void Tracking::Reset() {
-
+        cout << "start reset Tracking\n";
         // Reset Local Mapping
-        cout << "Reseting Local Mapper...";
         mpLocalMapper->RequestReset();
-        cout << " done" << endl;
 
         // Reset Loop Closing
-        cout << "Reseting Loop Closing...";
         mpLoopClosing->RequestReset();
-        cout << " done" << endl;
 
         // Clear BoW Database
-        cout << "Reseting Database...";
         mpKeyFrameDB->clear();
-        cout << " done" << endl;
 
         // Clear Map (this erase MapPoints and KeyFrames)
         mpMap->clear();
@@ -1443,6 +1323,7 @@ namespace ORB_SLAM2 {
         mlpReferences.clear();
         mlFrameTimes.clear();
         mlbLost.clear();
+        cout << "done reset Tracking\n";
     }
 
     void Tracking::ChangeCalibration(const string &strSettingPath) {
@@ -1528,7 +1409,7 @@ namespace ORB_SLAM2 {
             mpORBextractorRight = new ORBextractor{_nfeatures, _scaleFactor, _nlevels, _iniThFAST, _minThFAST};
 
         if (mSensor == System::MONOCULAR)
-            mpIniORBextractor = new ORBextractor{2*_nfeatures, _scaleFactor, _nlevels, _iniThFAST, _minThFAST};
+            mpIniORBextractor = new ORBextractor{2 * _nfeatures, _scaleFactor, _nlevels, _iniThFAST, _minThFAST};
         long unsigned int id;
         ar & id;
         mpReferenceKF = KeyFrame::objectListLookup[id];

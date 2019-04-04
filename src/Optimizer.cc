@@ -563,8 +563,8 @@ namespace ORB_SLAM2 {
                         e->cx = pKFi->cx;
                         e->cy = pKFi->cy;
 
-                        if(optimizer.vertex(id) == NULL || optimizer.vertex(pKFi->mnId) == NULL)
-                        cout<<"optimizer has NULL vertex\n";
+                        if (optimizer.vertex(id) == NULL || optimizer.vertex(pKFi->mnId) == NULL)
+                            cout << "optimizer has NULL vertex\n";
                         optimizer.addEdge(e);
                         vpEdgesMono.push_back(e);
                         vpEdgeKFMono.push_back(pKFi);
@@ -594,8 +594,8 @@ namespace ORB_SLAM2 {
                         e->cy = pKFi->cy;
                         e->bf = pKFi->mbf;
 
-                        if(optimizer.vertex(id) == NULL || optimizer.vertex(pKFi->mnId) == NULL)
-                            cout<<"optimizer has NULL vertex\n";
+                        if (optimizer.vertex(id) == NULL || optimizer.vertex(pKFi->mnId) == NULL)
+                            cout << "optimizer has NULL vertex\n";
                         optimizer.addEdge(e);
                         vpEdgesStereo.push_back(e);
                         vpEdgeKFStereo.push_back(pKFi);
