@@ -25,49 +25,75 @@
 #include <list>
 #include <set>
 
-#include "KeyFrame.h"
 #include "Frame.h"
 #include "ORBVocabulary.h"
 
 #include<mutex>
+#include <boost/serialization/split_free.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/map.hpp>
+#include "cvmat_serialization.h"
+#include <boost/serialization/base_object.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 
-namespace ORB_SLAM2
-{
+namespace ORB_SLAM2 {
 
-class KeyFrame;
-class Frame;
+    class KeyFrame;
+
+    class Frame;
 
 
-class KeyFrameDatabase
-{
-public:
+    class KeyFrameDatabase {
 
-    KeyFrameDatabase(const ORBVocabulary &voc);
+        friend class boost::serialization::access;
 
-   void add(KeyFrame* pKF);
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
 
-   void erase(KeyFrame* pKF);
+        // XXX: Need to modify code for ORB_SLAM2
+        void save(boost::archive::binary_oarchive &ar, const unsigned int version) const;
 
-   void clear();
 
-   // Loop Detection
-   std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
+// XXX: Need to modify code for ORB_SLAM2
+        void load(boost::archive::binary_iarchive &ar, const unsigned int version);
 
-   // Relocalization
-   std::vector<KeyFrame*> DetectRelocalizationCandidates(Frame* F);
+    public:
 
-protected:
+        KeyFrameDatabase(ORBVocabulary &voc);
 
-  // Associated vocabulary
-  const ORBVocabulary* mpVoc;
+        KeyFrameDatabase() {}
 
-  // Inverted file
-  std::vector<list<KeyFrame*> > mvInvertedFile;
+        void add(KeyFrame *pKF);
 
-  // Mutex
-  std::mutex mMutex;
-};
+        void erase(KeyFrame *pKF);
+
+        void clear();
+
+        void SetORBVocabulary(ORBVocabulary* orbVocabulary);
+
+        // Loop Detection
+        std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame *pKF, float minScore);
+
+        // Relocalization
+        std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame *F);
+
+    protected:
+
+        // Associated vocabulary
+        ORBVocabulary *mpVoc;
+
+        // Inverted file
+        std::vector<list<KeyFrame *> > mvInvertedFile;
+
+        // Mutex
+        std::mutex mMutex;
+    };
 
 } //namespace ORB_SLAM
 

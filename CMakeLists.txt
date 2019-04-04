@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5.1)
 project(orbslam2_ros)
 add_compile_options(-std=c++11)
 
@@ -41,6 +41,8 @@ find_package(OpenCV REQUIRED)
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
+find_package(PCL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system serialization python)
 
 catkin_package(
         INCLUDE_DIRS include
@@ -53,38 +55,44 @@ catkin_package(
         cv_bridge
         visualization_msgs
 )
-
+set(PROJECT_EXPANSION_DIR ${PROJECT_SOURCE_DIR}/Expansion)
+set(PROJECT_EXPANSION_SOURCES
+        ${PROJECT_EXPANSION_DIR}/src/*
+)
 include_directories(
         ${catkin_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_EXPANSION_DIR}/include
         ${EIGEN3_INCLUDE_DIR}
         ${Pangolin_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIR}
+        ${PCL_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS}
 )
 
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
 src/System.cc
+src/Map.cc
 src/Tracking.cc
 src/LocalMapping.cc
 src/LoopClosing.cc
 src/ORBextractor.cc
 src/ORBmatcher.cc
-src/FrameDrawer.cc
 src/Converter.cc
 src/MapPoint.cc
 src/KeyFrame.cc
-src/Map.cc
-src/MapDrawer.cc
 src/Optimizer.cc
 src/PnPsolver.cc
 src/Frame.cc
 src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
-src/Viewer.cc
+include/cvmat_serialization.h
+include/MapObjectSerialization.h
+include/dbow2_serialization.h
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -93,6 +101,7 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+${Boost_LIBRARIES}
 )
 
 # Build examples
@@ -100,7 +109,18 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
-add_executable(ros_mono
-Examples/Monocular/ros_mono.cc)
-target_link_libraries(ros_mono ${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+add_executable(ros_mono "")
+target_sources(ros_mono
+        PRIVATE
+        ${PROJECT_EXPANSION_DIR}/src/VisualSLAM.cpp
+        ${PROJECT_EXPANSION_DIR}/src/Publisher.cpp
+        ${PROJECT_EXPANSION_DIR}/Monocular/ros_mono.cc
+)
+target_link_libraries(ros_mono
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        ${PCL_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )
 

@@ -2,3 +2,13 @@
   image_topic_name: "/right_image"
   vocabulary_path: "Vocabulary/ORBvoc.txt"
   parameters_path: "sae.yaml"
+  publish_pose: true
+  pose_topic_name: "/pose"
+  publish_pointcloud: true
+  pointcloud_topic_name: "/points2"
+  publish_transform: true
+  camera_link_frame_id: "camera_link"
+  base_link_frame_id: "base_link"
+  map_link_frame_id: "visual_odom"
+  load_map_file: "/home/cz/map/01.map"
+  save_map_file: ""

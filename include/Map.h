@@ -21,64 +21,87 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "MapPoint.h"
 #include "KeyFrame.h"
+#include "MapPoint.h"
 #include <set>
 
 #include <mutex>
 
+#include <boost/serialization/split_member.hpp>
+#include "cvmat_serialization.h"
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
+namespace ORB_SLAM2 {
+    class KeyFrame;
 
-namespace ORB_SLAM2
-{
+    class MapPoint;
 
-class MapPoint;
-class KeyFrame;
+    class Map {
+        friend class boost::serialization::access;
 
-class Map
-{
-public:
-    Map();
+        // XXX: Need to modify code for ORB_SLAM2
+        void save(boost::archive::binary_oarchive &ar, const unsigned int version) const;
 
-    void AddKeyFrame(KeyFrame* pKF);
-    void AddMapPoint(MapPoint* pMP);
-    void EraseMapPoint(MapPoint* pMP);
-    void EraseKeyFrame(KeyFrame* pKF);
-    void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
-    void InformNewBigChange();
-    int GetLastBigChangeIdx();
+        // XXX: Need to modify code for ORB_SLAM2
+        void load(boost::archive::binary_iarchive &ar, const unsigned int version);
 
-    std::vector<KeyFrame*> GetAllKeyFrames();
-    std::vector<MapPoint*> GetAllMapPoints();
-    std::vector<MapPoint*> GetReferenceMapPoints();
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
 
-    long unsigned int MapPointsInMap();
-    long unsigned  KeyFramesInMap();
+    public:
+        Map();
 
-    long unsigned int GetMaxKFid();
+        void AddKeyFrame(KeyFrame *pKF);
 
-    void clear();
+        void AddMapPoint(MapPoint *pMP);
 
-    vector<KeyFrame*> mvpKeyFrameOrigins;
+        void EraseMapPoint(MapPoint *pMP);
 
-    std::mutex mMutexMapUpdate;
+        void EraseKeyFrame(KeyFrame *pKF);
 
-    // This avoid that two points are created simultaneously in separate threads (id conflict)
-    std::mutex mMutexPointCreation;
+        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
 
-protected:
-    std::set<MapPoint*> mspMapPoints;
-    std::set<KeyFrame*> mspKeyFrames;
+        void InformNewBigChange();
 
-    std::vector<MapPoint*> mvpReferenceMapPoints;
+        int GetLastBigChangeIdx();
 
-    long unsigned int mnMaxKFid;
+        std::vector<KeyFrame *> GetAllKeyFrames();
 
-    // Index related to a big change in the map (loop closure, global BA)
-    int mnBigChangeIdx;
+        std::vector<MapPoint *> GetAllMapPoints();
 
-    std::mutex mMutexMap;
-};
+        std::vector<MapPoint *> GetReferenceMapPoints();
+
+        long unsigned int MapPointsInMap();
+
+        long unsigned int KeyFramesInMap();
+
+        long unsigned int GetMaxKFid();
+
+        void clear();
+
+        vector<KeyFrame *> mvpKeyFrameOrigins;
+
+        std::mutex mMutexMapUpdate;
+
+        // This avoid that two points are created simultaneously in separate threads (id conflict)
+        std::mutex mMutexPointCreation;
+
+    protected:
+        std::set<MapPoint *> mspMapPoints;
+        std::set<KeyFrame *> mspKeyFrames;
+
+        std::vector<MapPoint *> mvpReferenceMapPoints;
+
+        long unsigned int mnMaxKFid;
+
+        // Index related to a big change in the map (loop closure, global BA)
+        int mnBigChangeIdx;
+
+        std::mutex mMutexMap;
+    };
 
 } //namespace ORB_SLAM
 

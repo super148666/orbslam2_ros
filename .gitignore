@@ -1,0 +1,6 @@
+Thirdparty/*
+.idea
+cmake-build-debug
+*.txt
+*.voc
+*.map

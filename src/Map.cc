@@ -20,114 +20,224 @@
 
 #include "Map.h"
 
-#include<mutex>
 
-namespace ORB_SLAM2
-{
+namespace ORB_SLAM2 {
 
-Map::Map():mnMaxKFid(0),mnBigChangeIdx(0)
-{
-}
+    Map::Map() : mnMaxKFid(0), mnBigChangeIdx(0) {
+    }
 
-void Map::AddKeyFrame(KeyFrame *pKF)
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mspKeyFrames.insert(pKF);
-    if(pKF->mnId>mnMaxKFid)
-        mnMaxKFid=pKF->mnId;
-}
+    void Map::AddKeyFrame(KeyFrame *pKF) {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        mspKeyFrames.insert(pKF);
+        if (pKF->mnId > mnMaxKFid)
+            mnMaxKFid = pKF->mnId;
+        cout<<"map unlocked\n";
+    }
 
-void Map::AddMapPoint(MapPoint *pMP)
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mspMapPoints.insert(pMP);
-}
+    void Map::AddMapPoint(MapPoint *pMP) {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        mspMapPoints.insert(pMP);
+        cout<<"map unlocked\n";
+    }
 
-void Map::EraseMapPoint(MapPoint *pMP)
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mspMapPoints.erase(pMP);
+    void Map::EraseMapPoint(MapPoint *pMP) {
+        cout<<"map locked\n";
+        try{
+            unique_lock<mutex> lock(mMutexMap);
+        }
+        catch (const std::exception& e){
+            cout<<e.what()<<"\n";
+        }
 
-    // TODO: This only erase the pointer.
-    // Delete the MapPoint
-}
+        mspMapPoints.erase(pMP);
 
-void Map::EraseKeyFrame(KeyFrame *pKF)
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mspKeyFrames.erase(pKF);
+        // TODO: This only erase the pointer.
+        // Delete the MapPoint
+        cout<<"map unlocked\n";
+    }
 
-    // TODO: This only erase the pointer.
-    // Delete the MapPoint
-}
+    void Map::EraseKeyFrame(KeyFrame *pKF) {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        mspKeyFrames.erase(pKF);
 
-void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs)
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mvpReferenceMapPoints = vpMPs;
-}
+        // TODO: This only erase the pointer.
+        // Delete the MapPoint
+        cout<<"map unlocked\n";
+    }
 
-void Map::InformNewBigChange()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    mnBigChangeIdx++;
-}
+    void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs) {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        mvpReferenceMapPoints = vpMPs;
+        cout<<"map unlocked\n";
+    }
 
-int Map::GetLastBigChangeIdx()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return mnBigChangeIdx;
-}
+    void Map::InformNewBigChange() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        mnBigChangeIdx++;
+        cout<<"map unlocked\n";
+    }
 
-vector<KeyFrame*> Map::GetAllKeyFrames()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return vector<KeyFrame*>(mspKeyFrames.begin(),mspKeyFrames.end());
-}
+    int Map::GetLastBigChangeIdx() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return mnBigChangeIdx;
+    }
 
-vector<MapPoint*> Map::GetAllMapPoints()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
-}
+    vector<KeyFrame *> Map::GetAllKeyFrames() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return vector<KeyFrame *>(mspKeyFrames.begin(), mspKeyFrames.end());
+    }
 
-long unsigned int Map::MapPointsInMap()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return mspMapPoints.size();
-}
+    vector<MapPoint *> Map::GetAllMapPoints() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return vector<MapPoint *>(mspMapPoints.begin(), mspMapPoints.end());
+    }
 
-long unsigned int Map::KeyFramesInMap()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return mspKeyFrames.size();
-}
+    long unsigned int Map::MapPointsInMap() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return mspMapPoints.size();
+    }
 
-vector<MapPoint*> Map::GetReferenceMapPoints()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return mvpReferenceMapPoints;
-}
+    long unsigned int Map::KeyFramesInMap() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return mspKeyFrames.size();
+    }
 
-long unsigned int Map::GetMaxKFid()
-{
-    unique_lock<mutex> lock(mMutexMap);
-    return mnMaxKFid;
-}
+    vector<MapPoint *> Map::GetReferenceMapPoints() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return mvpReferenceMapPoints;
+    }
 
-void Map::clear()
-{
-    for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
-        delete *sit;
+    long unsigned int Map::GetMaxKFid() {
+        cout<<"map locked\n";
+        unique_lock<mutex> lock(mMutexMap);
+        cout<<"map unlocked\n";
+        return mnMaxKFid;
+    }
 
-    for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
-        delete *sit;
+    void Map::clear() {
+        for (set<MapPoint *>::iterator sit = mspMapPoints.begin(), send = mspMapPoints.end(); sit != send; sit++)
+            delete *sit;
 
-    mspMapPoints.clear();
-    mspKeyFrames.clear();
-    mnMaxKFid = 0;
-    mvpReferenceMapPoints.clear();
-    mvpKeyFrameOrigins.clear();
-}
+        for (set<KeyFrame *>::iterator sit = mspKeyFrames.begin(), send = mspKeyFrames.end(); sit != send; sit++)
+            delete *sit;
+
+        mspMapPoints.clear();
+        mspKeyFrames.clear();
+        mnMaxKFid = 0;
+        mvpReferenceMapPoints.clear();
+        mvpKeyFrameOrigins.clear();
+    }
+
+    void Map::save(boost::archive::binary_oarchive &ar, const unsigned int version) const {
+
+        auto numKeyFrames = mspKeyFrames.size();
+        auto numMapPoints = mspMapPoints.size();
+        ar & mnMaxKFid & mnBigChangeIdx;
+
+        // save num of keyframe
+        ar & numKeyFrames;
+
+        // save all keyframes
+        for (auto &kf:mspKeyFrames) {
+            ar & kf;
+        }
+
+        // save mvpKeyFrameOrigins with just id reference
+        auto imvpKeyFrameOrigins = createIdList(mvpKeyFrameOrigins);
+        ar & imvpKeyFrameOrigins;
+
+        // save num of map points
+        ar & numMapPoints;
+
+        // save all map points
+        for (auto &mp:mspMapPoints) {
+            ar & mp;
+        }
+
+        // save mvpReferenceMapPoints
+        auto imvpReferenceMapPoints = createIdList(mvpReferenceMapPoints);
+        ar & imvpReferenceMapPoints;
+
+    }
+
+    void Map::load(boost::archive::binary_iarchive &ar, const unsigned int version) {
+        {
+            cout << "loading Map ...\n";
+            cout<<"map locked\n";
+            unique_lock<mutex> lock(mMutexMap);
+            ar & mnMaxKFid & mnBigChangeIdx;
+
+            // load num of keyframes
+            uint64_t numKeyFrames;
+            ar & numKeyFrames;
+
+
+            // clear objectListLookup in KeyFrame
+            KeyFrame::objectListLookup.clear();
+            mspKeyFrames.clear();
+
+            for (uint64_t id = 0; id < numKeyFrames; id++) {
+                auto kf = new KeyFrame;
+                ar & kf;
+                mspKeyFrames.insert(kf);
+                KeyFrame::objectListLookup[kf->mnId] = kf;
+            }
+
+            // load mvpKeyFrameOrigins
+            vector<uint64_t> imvpKeyFrameOrigins;
+            ar & imvpKeyFrameOrigins;
+            mvpKeyFrameOrigins = createObjectList<KeyFrame>(imvpKeyFrameOrigins);
+
+            // load num of map points
+            long unsigned int numMapPoints;
+            ar & numMapPoints;
+
+            // clear objectListLookup in MapPoint
+            MapPoint::objectListLookup.clear();
+            mspMapPoints.clear();
+
+            for (uint64_t id = 0; id < numMapPoints; id++) {
+                auto mp = new MapPoint;
+                ar & mp;
+                mspMapPoints.insert(mp);
+                MapPoint::objectListLookup[mp->mnId] = mp;
+            }
+
+
+            for (auto&kf:mspKeyFrames) {
+                kf->Recover();
+            }
+
+            for (auto&mp:mspMapPoints) {
+                mp->Recover();
+                mp->SetMap(this);
+            }
+
+            // load mvpReferenceMapPoints
+            vector<uint64_t> imvpReferenceMapPoints;
+            ar & imvpReferenceMapPoints;
+            mvpReferenceMapPoints = createObjectList<MapPoint>(imvpReferenceMapPoints);
+            cout<<"map unlocked\n";
+            cout << "DONE loading Map ...\n";
+
+        }
+    }
 
 } //namespace ORB_SLAM
